@@ -1,12 +1,12 @@
 MCU = attiny202
 MCU_CLOCK = 5000000UL
-CC_OPTS = -g
+CC_OPTS = -g -O2 -Wa,-mgcc-isr
 CC = avr-gcc
 OBJCOPY = avr-objcopy
 TARGETS = key-controller.hex key-controller key-controller.o
 
 .PHONY: all
-all: key-controller
+all: key-controller.hex
 
 .PHONY: clean
 clean:
