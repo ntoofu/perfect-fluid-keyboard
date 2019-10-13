@@ -1,5 +1,6 @@
-#include <avr/io.h>
+#include <avr/eeprom.h>
 #include <avr/interrupt.h>
+#include <avr/io.h>
 #include <util/delay.h>
 #include <util/twi.h>
 
@@ -10,13 +11,14 @@
 #define _PORT_CTRL_MACRO_JOIN(pin) _PORT_CTRL_MACRO_JOIN2(pin)
 #define _KEY_SWITCH_PORT_CTRL _PORT_CTRL_MACRO_JOIN(_KEY_SWITCH_PORT)
 #define _MUXER_INH 7
-#define _TWI_ADDR (0x01)
+#define _KEY_ID_ADDR_IN_EEPROM 0x00
 #define _PWM_PERIOD (0x0341)
 #define _TIMEOUT_THRESHOLD 2
 
 static volatile uint8_t twi_timeout_cnt = 0;
 static volatile uint8_t twi_rx_data = 0;
 static volatile uint8_t cnt = 0;
+static const uint8_t i2c_min_addr = 0x08;
 
 void led_message(uint8_t val){
     for(int i=7; i>=0; --i) {
@@ -60,13 +62,15 @@ void timer_init(void) {
 }
 
 void initialization(void) {
+    uint8_t key_id;
     PORTA.DIR |= _BV(_KEY_LED_PORT);
     PORTA.DIR &= ~_BV(_KEY_SWITCH_PORT);
     PORTA.DIR |= _BV(_MUXER_INH);
     PORTA.OUT = 0;
     PORTA._KEY_SWITCH_PORT_CTRL |= PORT_PULLUPEN_bm;
     timer_init();
-    i2c_init_slave(_TWI_ADDR);
+    key_id = eeprom_read_byte(_KEY_ID_ADDR_IN_EEPROM);
+    i2c_init_slave(i2c_min_addr + key_id);
     led_level(0x80);
     _delay_ms(100);
     led_level(0x00);
